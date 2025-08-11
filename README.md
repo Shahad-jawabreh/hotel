@@ -28,15 +28,3 @@ The page shows room details such as type, capacity, price per night, and a form 
 When opening the booking page, all bookings made by the user are displayed.  
 ![8](screenshot/8Capture.PNG)  
 
----
-
-# How to Download and Run the Project
-
-1. **Clone the repository:**
-
-```bash
-git clone https://github.com/your-username/your-repo-name.git
-
-2. **Navigate to the project folder:**
-```bash
-cd your-repo-name
