@@ -1,0 +1,39 @@
+        body {
+            background-color: #f9f9f9;
+             font-family: "Lateef", serif;
+             font-weight: 600;
+             font-size: x-large;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #d4a373, #c89f5d);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+        .nav-link {
+            color: white !important;
+        }
+        .hero {
+           background:
+      linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+      url('{{ asset("image/main.jpg") }}') center/cover no-repeat;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 1px 1px 8px rgba(0,0,0,0.6);
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+        }
+        footer {
+            background-color: #2f2f2f;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: 50px;
+        }
