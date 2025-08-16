@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Hotel; 
+use Carbon\Carbon;
 
 class HotelController extends Controller
 {
@@ -36,5 +37,13 @@ class HotelController extends Controller
     {
         $hotel = Hotel::with('rooms')->findOrFail($id);
         return view('hotels.show', compact('hotel'));
+    }
+    public function delete() {
+        $dataDelete = Hotel::where('location', 'hebron')->delete();
+        
+        return response()->json([
+            'message' => ' hotels in Hebron deleted successfully',
+            'deleted_count' => $dataDelete
+        ]);
     }
 }

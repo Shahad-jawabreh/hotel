@@ -11,6 +11,7 @@ Route::get('/', function () {
 })->name('main');
 Route::get('/hotels', [HotelController::class, 'index'])->name('hotels.index');
 Route::get('/hotels/{id}', [HotelController::class, 'show'])->name('hotels.show');
+Route::delete('/hotels/hebronHotel', [HotelController::class, 'delete'])->name('hotels.delete');
 Route::get('/rooms', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
 Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
