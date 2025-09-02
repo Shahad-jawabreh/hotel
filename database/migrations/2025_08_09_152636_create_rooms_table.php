@@ -17,7 +17,7 @@ return new class extends Migration
         $table->enum('type', ['compy', 'tiny', 'basic', 'cosy', 'grand']);
         $table->integer('price');
         $table->integer('capacity');
-        $table->string('image');
+        $table->string('image')->default('default-room.jpg');
         $table->timestamps();
     });
 }

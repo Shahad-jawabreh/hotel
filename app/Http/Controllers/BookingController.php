@@ -1,37 +1,82 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
 use App\Models\Booking;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreBookingRequest;
+use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function store(Request $request)
+    // Show all bookings
+    public function index()
     {
-        $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
-        ]);
-
-        Booking::create([
-            'user_id' => 1,
+        $bookings = Booking::with('room.hotel')->where('user_id', Auth::id())->get();
+        return response()->json(['success' => true, 'bookings' => $bookings]);
+    }
+    public function store(StoreBookingRequest $request)
+    {
+        $booking = Booking::create([
+            'user_id' => Auth::id(),
             'room_id' => $request->room_id,
             'check_in' => $request->check_in,
             'check_out' => $request->check_out,
             'status' => 'pending',
         ]);
 
-        return redirect()->back()->with('success', 'Your booking has been placed successfully!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Your booking has been placed successfully!',
+            'data' => $booking
+        ], 201);
     }
-    public function show()
-    {
-        $user = User::findOrFail(1);
-        $bookings = Booking::where('user_id', 1)->with('room.hotel')->get();
 
-        return view('bookings.show', compact('user', 'bookings'));
+    public function show(Booking $booking)
+    {
+       return response()->json(['success' => true, 'booking' => $booking]);
+    }
+
+    public function update(StoreBookingRequest $request, Booking $booking)
+    {
+        $booking->update([
+            'room_id' => $request->room_id,
+            'check_in' => $request->check_in,
+            'check_out' => $request->check_out,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking updated successfully!',
+            'data' => $booking
+        ]);
+    }
+
+    // Delete booking
+     public function delete(Request $request)
+    {
+        if ($request->has('ids')) {
+            $deletedCount = Booking::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking deleted successfully',
+                'deleted_count' => $deletedCount
+            ]);
+        }
+
+        if ($request->has('id')) {
+            $Booking = Booking::find($request->id);
+            $Booking->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Booking with ID {$request->id} deleted successfully"
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No ID(s) provided for deletion'
+        ], 400);
     }
 }

@@ -1,49 +1,99 @@
 <?php
-
 namespace App\Http\Controllers;
-
+use App\Http\Resources\HotelResource;
 use Illuminate\Http\Request;
-use App\Models\Hotel; 
-use Carbon\Carbon;
+use App\Models\Hotel;
+use App\Http\Requests\HotelRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+
 
 class HotelController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Hotel::query();
-
-    if ($request->filled('location')) {
-        $query->where('location', 'like', '%' . $request->location . '%');
+    {
+        $hotels = Hotel::query()
+            ->location($request->location)
+            ->priceRange($request->min_price, $request->max_price)
+            ->get();
+    return HotelResource::collection($hotels);
     }
 
-    if ($request->filled('min_price') || $request->filled('max_price')) {
-        $query->whereHas('rooms', function ($q) use ($request) {
-            if ($request->filled('min_price') && $request->filled('max_price')) {
-                $q->whereBetween('price', [$request->min_price, $request->max_price]);
-            } elseif ($request->filled('min_price')) {
-                $q->where('price', '>=', $request->min_price);
-            } elseif ($request->filled('max_price')) {
-                $q->where('price', '<=', $request->max_price);
+    public function show(Hotel $hotel)
+{
+    return new HotelResource($hotel->load('rooms'));
+}
+
+    public function destroy(Request $request)
+    {
+        // delete photos corraspand on hotel deleted
+
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No booking ID(s) provided!',
+            ], 400);
+        }
+
+        $hotels = Hotel::whereIn('id', $ids)->get();
+        if ($hotels->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking(s) not found!',
+            ], 404);
+        }
+        DB::transaction(function () use ($hotels) {
+            foreach ($hotels as $hotel) {
+                $hotel->delete();
             }
         });
-    }
 
-    $hotels = $query->get();
 
-    return view('hotels.index', compact('hotels'));
-}
-
-    public function show($id)
-    {
-        $hotel = Hotel::with('rooms')->findOrFail($id);
-        return view('hotels.show', compact('hotel'));
-    }
-    public function delete() {
-        $dataDelete = Hotel::where('location', 'hebron')->delete();
-        
         return response()->json([
-            'message' => ' hotels in Hebron deleted successfully',
-            'deleted_count' => $dataDelete
+            'success' => true,
+            'message' => count($ids) > 1
+                ? 'Bookings deleted successfully!'
+                : 'Booking deleted successfully!',
         ]);
     }
+
+    public function store(HotelRequest $request)
+    {
+        $data = $request->only(['name', 'location', 'description']);
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('hotels', 'public');
+        }
+
+        $hotel = new Hotel();
+        $hotel->fill($data);
+         $hotel->save();
+       $roomData = [
+            'hotel_id' => $hotel->id,
+            'price' => $request['price'],
+            'capacity' => $request['capacity'],
+            'type' => $request['type'],
+        ];
+        $response = Http::post(env('ROOM_API'.''), $roomData);
+//edit
+        if ($response->successful()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Hotel and Room created successfully',
+                'hotel'   => $hotel,
+                'room'    => $response->json(),
+            ]);
+        }
+
+
+        return response()->json([
+            'success' => false,
+            'message' => 'failed to create Room',
+            'error'   => $response->body(),
+        ], $response->status());
+    }
+
 }
+
+
